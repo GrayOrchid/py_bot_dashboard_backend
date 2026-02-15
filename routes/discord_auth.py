@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from services import UserService, TokenService
 from services.discord_auth_service import DiscordAuthService
-from sqlalchemy.orm import joinedload
-from models.user import UserModel
-from dependencies import get_current_user
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
 
+
+templates = Jinja2Templates(directory="templates")
 router = APIRouter(tags=["Discord Auth"])
 
 
@@ -36,21 +37,31 @@ async def login_discord():
         secure=False,
         path="/"
     )
-    return {"url": auth_url}
+    return response
+
 
 @router.get("/callback")
-async def discord_callback(code: str, db: Session = Depends(get_db)):
+async def discord_callback(request: Request, code: str, db: Session = Depends(get_db)):
     discord_data = await DiscordAuthService.authenticate_via_discord(code)
     user_service = UserService(db)
     user = await user_service.authenticate_discord_user(discord_data)
 
-    access_token = TokenService.create_access_token(data={"sub": str(user.id)})
-    frontend_url = f"http://localhost:5173/auth-success?token={access_token}"
-    print(f"Redirecting to: {frontend_url}")
-    return RedirectResponse(url=frontend_url)
+    discord_acc = next((acc for acc in user.linked_accounts if acc.provider == "discord"), None)
+    user_name = discord_acc.display_name if discord_acc else "Unknown User"
+    avatar = discord_acc.avatar_url if discord_acc else None
 
-@router.get("/users")
-async def get_all_users(db: Session = Depends(get_db)):
-    users = db.query(UserModel).options(joinedload(UserModel.linked_accounts)).all()
-    return users
+    access_token = TokenService.create_access_token(data={"sub": str(user.id)})
+
+    return templates.TemplateResponse(
+        "auth_success.html",
+        {
+            "request": request,
+            "access_token": access_token,
+            "user_name": user_name,
+            "user_data": {
+                "id": str(user.id),
+                "avatar": avatar
+            }
+        }
+    )
 
