@@ -4,18 +4,20 @@ from starlette.middleware.sessions import SessionMiddleware
 from database import Base, engine
 from routes import main_api_router
 from dotenv import load_dotenv
+from fastapi.templating import Jinja2Templates
 import os
 
 load_dotenv()
 
 app = FastAPI(title="Mini String API")
 
+templates = Jinja2Templates(directory="templates")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Разрешить любой сайт
+    allow_origins=["*"],
     allow_credentials=False,
-    allow_methods=["*"], # Разрешить GET, POST, OPTIONS и т.д.
-    allow_headers=["*"], # Разрешить любые заголовки
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.add_middleware(
@@ -23,7 +25,6 @@ app.add_middleware(
     secret_key=os.getenv("SESSION_SECRET_KEY", "h256")
 )
 
-# 4. Подключаем роутеры и БД
 Base.metadata.create_all(bind=engine)
 app.include_router(main_api_router, prefix="/api")
 
