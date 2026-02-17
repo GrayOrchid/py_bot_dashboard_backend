@@ -1,12 +1,14 @@
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from .linked_account import LinkedAccountSchema
+from .linked_account import LinkedAccountPublic
 
-class UserSchema(BaseModel):
+class UserBase(BaseModel):
     id: int
     created_at: datetime
-    linked_accounts: List[LinkedAccountSchema] = []
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
+class UserPublic(UserBase):
+    linked_accounts: List[LinkedAccountPublic] = []
+
+UserSchema = UserPublic

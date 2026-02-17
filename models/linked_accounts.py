@@ -14,9 +14,10 @@ class LinkedAccountModel(Base):
     avatar_url = Column(String(255), nullable=True)
     discriminator = Column(String(10), nullable=True)
     last_used_at = Column(DateTime, nullable=True)
-
+    access_token = Column(String(255), nullable=True)
+    refresh_token = Column(String(255), nullable=True)
     user = relationship("UserModel", back_populates="linked_accounts")
-
+    expires_at = Column(DateTime, nullable=True)
     __table_args__ = (
         UniqueConstraint('provider', 'provider_id', name='uq_provider_account'),
     )

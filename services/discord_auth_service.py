@@ -24,7 +24,6 @@ class DiscordAuthService:
         query_string = urlencode(params)
         return f"{auth_url}?{query_string}"
 
-
     async def authenticate_via_discord(code: str) -> dict:
         client_id = os.getenv("DISCORD_CLIENT_ID")
         client_secret = os.getenv("DISCORD_CLIENT_SECRET")
@@ -33,7 +32,6 @@ class DiscordAuthService:
         user_url = os.getenv("DISCORD_USER_URL")
 
         async with httpx.AsyncClient() as client:
-
             data = {
                 "client_id": client_id,
                 "client_secret": client_secret,
@@ -50,7 +48,10 @@ class DiscordAuthService:
                 raise HTTPException(status_code=400, detail=f"Discord token error: {token_resp.text}")
 
             token_json = token_resp.json()
+
             access_token = token_json.get("access_token")
+            refresh_token = token_json.get("refresh_token")
+            expires_in = token_json.get("expires_in")
 
             user_headers = {"Authorization": f"Bearer {access_token}"}
             user_resp = await client.get(user_url, headers=user_headers)
@@ -58,4 +59,13 @@ class DiscordAuthService:
             if user_resp.status_code != 200:
                 raise HTTPException(status_code=400, detail="Failed to get user data from Discord")
 
-            return user_resp.json()
+            user_data = user_resp.json()
+
+            return {
+                "user": user_data,
+                "tokens": {
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                    "expires_in": expires_in
+                }
+            }

@@ -1,7 +1,7 @@
 from models.linked_accounts import LinkedAccountModel
 from models.user import UserModel
 from repositories.base_repository import BaseRepository
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session, joinedload
 
 class UserRepository(BaseRepository):
@@ -14,12 +14,12 @@ class UserRepository(BaseRepository):
             joinedload(UserModel.linked_accounts)
         ).filter(UserModel.id == user_id).first()
 
-    def sync_discord_user(self, discord_data: dict) -> UserModel:
+    def sync_discord_user(self, full_data: dict) -> UserModel:
+        discord_data = full_data["user"]
+        tokens = full_data["tokens"]
+
         d_id = discord_data["id"]
         now = datetime.now(timezone.utc)
-
-        avatar_hash = discord_data.get('avatar')
-        avatar_url = f"https://cdn.discordapp.com/avatars/{d_id}/{avatar_hash}.png" if avatar_hash else None
 
         account = self.db.query(LinkedAccountModel).filter_by(provider="discord", provider_id=d_id).first()
 
@@ -31,10 +31,11 @@ class UserRepository(BaseRepository):
             self.db.add(account)
 
         account.display_name = discord_data.get("global_name") or discord_data.get("username")
-        account.avatar_url = avatar_url
         account.last_used_at = now
 
-        account.discriminator = discord_data.get("discriminator", "0")
+        account.access_token = tokens.get("access_token")
+        account.refresh_token = tokens.get("refresh_token")
+        account.expires_at = now + timedelta(seconds=tokens.get("expires_in", 0))
 
         self.db.commit()
         self.db.refresh(account.user)

@@ -9,8 +9,8 @@ class UserService:
         self.db = db
         self.repository = UserRepository(db)
 
-    async def authenticate_discord_user(self, discord_data: dict) -> UserSchema:
-        user_model = self.repository.sync_discord_user(discord_data)
+    async def authenticate_discord_user(self, full_discord_data: dict) -> UserSchema:
+        user_model = self.repository.sync_discord_user(full_discord_data)
         return UserSchema.model_validate(user_model)
 
     async def get_user_from_token(self, token: str):
