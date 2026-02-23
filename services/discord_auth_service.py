@@ -60,7 +60,6 @@ class DiscordAuthService:
                 raise HTTPException(status_code=400, detail="Failed to get user data from Discord")
 
             user_data = user_resp.json()
-
             return {
                 "user": user_data,
                 "tokens": {
