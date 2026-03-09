@@ -3,11 +3,14 @@ from fastapi import HTTPException, status
 from repositories import UserRepository
 from schemas import UserSchema
 from services.token_service import TokenService
+from core import redis_client
+
 
 class UserService:
     def __init__(self, db: Session):
         self.db = db
         self.repository = UserRepository(db)
+        self.redis = redis_client
 
     async def authenticate_discord_user(self, full_discord_data: dict) -> UserSchema:
         user_model = self.repository.sync_discord_user(full_discord_data)
@@ -17,13 +20,10 @@ class UserService:
         payload = TokenService.decode_access_token(token)
         if not payload:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
         user_id = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Payload error")
-
         user = self.repository.get_user_with_accounts(int(user_id))
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
         return user

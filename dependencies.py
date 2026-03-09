@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
-from database import SessionLocal
+from core.database import SessionLocal
 from services import UserService
 from models.user import UserModel
 

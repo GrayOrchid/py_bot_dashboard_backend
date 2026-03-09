@@ -1,28 +1,33 @@
 import jwt
-import os
 from datetime import datetime, timedelta, timezone
+from core import settings
 
 class TokenService:
-    def create_access_token(data: dict):
-        secret_key = os.getenv("JWT_SECRET_KEY")
-        algorithm = os.getenv("JWT_ALGORITHM", "HS256")
-        expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-
-        if not secret_key:
-            raise ValueError("FATAL: JWT_SECRET_KEY is not set in environment!")
-
+    @staticmethod
+    def create_access_token(data: dict) -> str:
         to_encode = data.copy()
-        expire = datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)
+
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
         to_encode.update({"exp": expire})
 
-        return jwt.encode(to_encode, secret_key, algorithm=algorithm)
+        encoded_jwt = jwt.encode(
+            to_encode,
+            settings.JWT_SECRET_KEY,
+            algorithm=settings.JWT_ALGORITHM
+        )
+        return encoded_jwt
 
-    def decode_access_token(token: str):
+    @staticmethod
+    def decode_access_token(token: str) -> dict | None:
+
         try:
-            secret_key = os.getenv("JWT_SECRET_KEY")
-            algorithm = os.getenv("JWT_ALGORITHM", "HS256")
-
-            payload = jwt.decode(token, secret_key, algorithms=[algorithm])
+            payload = jwt.decode(
+                token,
+                settings.JWT_SECRET_KEY,
+                algorithms=[settings.JWT_ALGORITHM]
+            )
             return payload
         except jwt.ExpiredSignatureError:
             return None

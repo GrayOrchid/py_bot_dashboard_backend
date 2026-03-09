@@ -1,11 +1,8 @@
-from models.linked_accounts import LinkedAccountModel
-from models.user import UserModel
-from repositories.base_repository import BaseRepository
-from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session, joinedload
+from models.user import UserModel
+from datetime import datetime, timezone
 
-class UserRepository(BaseRepository):
-
+class UserRepository:
     def __init__(self, db: Session):
         self.db = db
 
@@ -14,41 +11,19 @@ class UserRepository(BaseRepository):
             joinedload(UserModel.linked_accounts)
         ).filter(UserModel.id == user_id).first()
 
-    def sync_discord_user(self, full_data: dict) -> UserModel:
-        discord_data = full_data["user"]
-        tokens = full_data["tokens"]
-        d_id = discord_data["id"]
+    def get_user_by_email(self, email: str) -> UserModel | None:
+        return self.db.query(UserModel).filter_by(email=email).first()
+
+    def create_user(self, email: str) -> UserModel:
         now = datetime.now(timezone.utc)
-
-        account = self.db.query(LinkedAccountModel).filter_by(provider="discord", provider_id=d_id).first()
-
-        if not account:
-            user = UserModel(created_at=now)
-            self.db.add(user)
-            self.db.flush()
-            account = LinkedAccountModel(
-                user_id=user.id,
-                provider="discord",
-                provider_id=d_id
-            )
-            self.db.add(account)
-
-        account.display_name = discord_data.get("global_name") or discord_data.get("username")
-
-        avatar_hash = discord_data.get("avatar")
-        if avatar_hash:
-            ext = "gif" if avatar_hash.startswith("a_") else "png"
-            account.avatar_url = f"https://cdn.discordapp.com/avatars/{d_id}/{avatar_hash}.{ext}?size=256"
-        else:
-
-            account.avatar_url = "https://cdn.discordapp.com/embed/avatars/0.png?size=256"
-
-        account.last_used_at = now
-        account.access_token = tokens.get("access_token")
-        account.refresh_token = tokens.get("refresh_token")
-        account.expires_at = now + timedelta(seconds=tokens.get("expires_in", 0))
-
+        user = UserModel(email=email, email_verified=True, created_at=now)
+        self.db.add(user)
         self.db.commit()
-        self.db.refresh(account.user)
+        self.db.refresh(user)
+        return user
 
-        return account.user
+    def verify_user_email(self, user: UserModel):
+        user.email_verified = True
+        self.db.commit()
+        self.db.refresh(user)
+

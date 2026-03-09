@@ -1,11 +1,11 @@
 import secrets
-from typing import Dict, Optional
+from typing import Dict
 from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import RedirectResponse
 import httpx
 from dotenv import load_dotenv
 import os
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String
 import logging
 from sqlalchemy.ext.declarative import declarative_base
 logging.basicConfig(level=logging.INFO)
@@ -132,7 +132,7 @@ async def discord_callback(code: str, state: str, request: Request):
             logger.info(f"Успешно авторизован Discord пользователь: {discord_username} ({discord_id})")
 
             # 4. Работа с базой данных
-            from database import SessionLocal
+            from core.database import SessionLocal
             db = SessionLocal()
             try:
                 # Ищем существующего пользователя по discord_id
@@ -193,7 +193,7 @@ async def discord_callback(code: str, state: str, request: Request):
 @router.get("/linked-accounts/{user_id}")
 async def get_linked_accounts(user_id: str, user: Dict = Depends(get_current_user)):
     # Пример: получи из БД
-    from database import SessionLocal
+    from core.database import SessionLocal
     db = SessionLocal()
     system_user = db.query(User).filter(User.id == user_id).first()
     db.close()
@@ -203,6 +203,6 @@ async def get_linked_accounts(user_id: str, user: Dict = Depends(get_current_use
 
 @router.get("get_all_linked_accounts")
 async def get_all_linked_accounts():
-    from database import SessionLocal
+    from core.database import SessionLocal
     db = SessionLocal()
     return db.query(User).all()

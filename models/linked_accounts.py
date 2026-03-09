@@ -1,6 +1,6 @@
 from sqlalchemy import String, Integer, Column, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import  relationship
-from database import Base
+from core.database import Base
 
 class LinkedAccountModel(Base):
     __tablename__ = "linked_accounts"
