@@ -2,7 +2,7 @@ import secrets
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from database import SessionLocal
+from core.database import SessionLocal
 from services import UserService, TokenService
 from services.discord_auth_service import DiscordAuthService
 from fastapi.templating import Jinja2Templates
