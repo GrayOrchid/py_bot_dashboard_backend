@@ -12,7 +12,6 @@ from fastapi import Request
 templates = Jinja2Templates(directory="templates")
 router = APIRouter(tags=["Discord Auth"])
 
-
 def get_db():
     db = SessionLocal()
     try:

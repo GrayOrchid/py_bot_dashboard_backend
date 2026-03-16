@@ -4,7 +4,7 @@ from core.database import SessionLocal
 from schemas.auth import SendOTPRequest, VerifyOTPRequest
 from services.otp_service import OTPService
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(tags=["Auth"])
 
 def get_db():
     db = SessionLocal()
