@@ -6,6 +6,7 @@ from services.otp_service import OTPService
 
 router = APIRouter(tags=["Auth"])
 
+
 def get_db():
     db = SessionLocal()
     try:
