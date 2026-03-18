@@ -13,19 +13,16 @@
     </div>
 
     <script>
-        // Jinja2 вставит данные в формате JSON благодаря фильтру | tojson
         const payload = {
             token: "{{ access_token }}",
             user: {{ user_data | tojson }}
         };
 
-        // Отправляем данные в родительское окно (твой фронтенд)
         window.opener.postMessage(
             { type: "AUTH_SUCCESS", payload: payload },
             "http://localhost:5173"
         );
 
-        // Закрываем окно через полсекунды
         setTimeout(() => window.close(), 500);
     </script>
 </body>

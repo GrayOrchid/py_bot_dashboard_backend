@@ -7,7 +7,7 @@ from dependencies import get_current_user
 from models.user import UserModel
 from schemas.user import UserPublic
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter( tags=["Users"])
 
 def get_db():
     db = SessionLocal()
