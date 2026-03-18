@@ -4,7 +4,8 @@ from core.database import SessionLocal
 from schemas.auth import SendOTPRequest, VerifyOTPRequest
 from services.otp_service import OTPService
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(tags=["Auth"])
+
 
 def get_db():
     db = SessionLocal()
@@ -19,7 +20,7 @@ async def send_otp(
     db: Session = Depends(get_db)
 ):
     service = OTPService(db)
-    return await service.send_otp(request.email)
+    return await service.send_otp(request.email, request.lang)
 
 @router.post("/verify-otp")
 async def verify_otp(

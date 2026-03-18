@@ -9,7 +9,8 @@ from core import redis_client, settings
 from repositories.user_repository import UserRepository
 from schemas.user import UserSchema
 from services.token_service import TokenService
-from templates.mail_templates import OTP_TEXT_TEMPLATE
+from templates import MAIL_TEMPLATES
+
 
 class OTPService:
     def __init__(self, db: Session):
@@ -34,12 +35,10 @@ class OTPService:
                 use_tls=settings.MAIL_USE_TLS,
                 validate_certs=True,
             )
-            print(f"[MAIL] Отправлено на {to_email}")
         except Exception as e:
             print(f"[MAIL ERROR] {to_email}: {type(e).__name__}: {e}")
 
-
-    async def send_otp(self, email: str) -> Dict[str, str]:
+    async def send_otp(self, email: str, lang: str) -> Dict[str, str]:
         attempts_key = f"otp_attempts:{email}"
         attempts = await self.redis.incr(attempts_key)
 
@@ -54,17 +53,21 @@ class OTPService:
 
         otp = f"{secrets.randbelow(1000000):06d}"
         key = f"otp:email:{email}"
+
         await self.redis.setex(key, 300, otp)
 
-        subject = "Код подтверждения для входа"
-        body = OTP_TEXT_TEMPLATE.format(
+        mail_config = MAIL_TEMPLATES.get(lang, MAIL_TEMPLATES["en"])
+
+        subject = mail_config["subject"]
+        body = mail_config["template"].format(
             otp=otp,
             valid_minutes=5
         )
 
         await self._send_email(email, subject, body)
 
-        return {"message": "Код отправлен на вашу почту"}
+        message = "Код отправлен на вашу почту" if lang == "ru" else "Verification code sent to your email"
+        return {"message": message}
 
     async def verify_otp(self, email: str, otp: str) -> Dict[str, Any]:
         """Проверка OTP и выдача токена"""
